@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "errorno.h"
-
+#ifndef __GNUC__
+#define __GNUC__
+#endif
 #define check_null_input(ptr) do{\
     if(NULL == ptr) return ERROR_CODE_NULL_POINT_EXCEPTION;\
 }while(0)
@@ -50,7 +52,7 @@
   *
   */
 #define strcpyALL(buf,...) do{ \
-    char *a[] = { __VA_ARGS__, NULL}; \
+    const char *a[] = { __VA_ARGS__, NULL}; \
     int strcpyALL_len_int = 1, strcpyALL_index_int = 0;\
     while(a[strcpyALL_index_int])\
     {\

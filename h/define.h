@@ -1,7 +1,9 @@
 #ifndef __define_H__
 #define __define_H__
+
 #include <sys/syslog.h>
 #include <pthread.h>
+
 #ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
@@ -38,21 +40,21 @@
 #endif /* DEBUG_MODE */
 
 #ifndef SYSLOG
-#   define syslog_print(level, mode, fmt, ...) \
+#   define debuglog(level, mode, fmt, ...) \
     fprintf(level, "[%lu] [%5.5s] - %16.16s(%4d) - %16.16s: " fmt , \
         pthread_self(), mode, __FILE__, __LINE__, __func__, ##__VA_ARGS__);
 #define log_debug(fmt, ...) \
-    syslog_print(PRINTMSG_OUTFILE, "DEBUG", fmt, ##__VA_ARGS__);
+    debuglog(PRINTMSG_OUTFILE, "DEBUG", fmt, ##__VA_ARGS__);
 #define log_err(fmt, ...) \
-    syslog_print(PRINTERR_OUTFILE, "ERROR", fmt, ##__VA_ARGS__);
+    debuglog(PRINTERR_OUTFILE, "ERROR", fmt, ##__VA_ARGS__);
 #else
-#   define syslog_print(level, mode, fmt, ...) \
+#   define debuglog(level, mode, fmt, ...) \
     syslog(level, "[%lu] [%5.5s] - %16.16s(%4d) - %16.16s: " fmt , \
         pthread_self(), mode, __FILE__, __LINE__, __func__, ##__VA_ARGS__);
 #define log_debug(fmt, ...) \
-    syslog_print(LOG_DEBUG, "DEBUG", fmt, ##__VA_ARGS__);
+    debuglog(LOG_DEBUG, "DEBUG", fmt, ##__VA_ARGS__);
 #define log_err(fmt, ...) \
-    syslog_print(LOG_ERR, "ERROR", fmt, ##__VA_ARGS__);
+    debuglog(LOG_ERR, "ERROR", fmt, ##__VA_ARGS__);
 #endif
 
 
