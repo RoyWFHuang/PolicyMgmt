@@ -16,8 +16,8 @@ endif
 
 ifeq ($(DEBUG_MODE), yes)
     CFLAG += -DDEBUG_MODE
-    ifeq ($(LCM_DEBUG_MODE), yes)
-        CFLAG += -DLCM_DEBUG_MODE
+    ifeq ($(PLM_DEBUG_MODE), yes)
+        CFLAG += -DPLM_DEBUG_MODE
     endif
 endif
 
@@ -48,6 +48,6 @@ distclean: clean
 
 test:
 	$(CC) -c $(POLICMGMT_LIB_FILE) plmtest.c $(CFLAG) \
-$(INCLUDE_DIR) $(DEBUG_FLAG) -DCONSOLE_DEBUG -DMD_DIR_PATH=\"./\"
+$(INCLUDE_DIR) $(DEBUG_FLAG) -DCONSOLE_DEBUG -DMD_DIR_PATH=\".\"
 	$(CC) -g *.o -lmethod -L../UtilLib/lib/ -lcrypto -o plmtest
 	rm -rf *.o

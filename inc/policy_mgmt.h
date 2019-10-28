@@ -32,7 +32,7 @@ typedef struct _tPolicyGrp
 
 int read_policy(const char *path, tPolicyGrp *policy_grp);
 int write_policy(const char *path, const tPolicyGrp *policy_grp);
-
+int del_policy(const char *path);
 /**
   * Hint :  Input data  is no be free in this func
   *

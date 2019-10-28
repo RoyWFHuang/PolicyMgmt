@@ -13,8 +13,6 @@
 static int __parserUserList(const char *user_list,
     tPolicyStruct *policy_data)
 {
-
-    //autofree_type_ptr char *tmp_list = NULL;
     RAII_VARIABLE(char *, tmp_list, NULL, free);
 
     check_null_input(user_list);
@@ -41,7 +39,10 @@ static int __parserUserList(const char *user_list,
 }
 
 static char *__conver_to_policy_file_path(const char *path){
+
     char *policy_path = NULL;
+    if(NULL == path) return NULL;
+
     tLastNameData lnd;
     memset(&lnd, 0,sizeof(tLastNameData) );
     strcpyALL(lnd.input_path_pchar, path);
@@ -50,6 +51,7 @@ static char *__conver_to_policy_file_path(const char *path){
         POLICY_PREFIX, lnd.last_name_pchar);
     free_tLastNameData(lnd);
     return policy_path;
+
 }
 
 static int __check_user_exists(const char* user, const char** user_list,
@@ -85,7 +87,8 @@ static int __check_policy(const char* user,
             &polcy_grp->policy_data[policy_index];
         if(tmp_policy->policy_mask & mask)
         {
-            return __check_user_exists(user, (const char**)tmp_policy->user_list,
+            return __check_user_exists(user,
+                (const char**)tmp_policy->user_list,
                 tmp_policy->num_user_list);
         }
     }
@@ -100,14 +103,15 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
     size_t len = 0;
     ssize_t nread;
 
-    //autofree_type_ptr char *policy_path = NULL;
-    //autofree_type_ptr char *user_list = NULL;
     RAII_VARIABLE(char *, policy_path, NULL, free);
 
     check_null_input(path);
     check_null_input(policy_grp);
 
     policy_path = __conver_to_policy_file_path(path);
+#ifdef PLM_DEBUG_MODE
+    PLM_DEBUG_PRINT("policy_path [%s]\n", policy_path);
+#endif
     stream = fopen(policy_path, "r");
     if (NULL == stream) {
         return ERROR_CODE_PATH_ERROR;
@@ -117,7 +121,9 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
     while ((nread = getline(&indata_buf, &len, stream)) != -1) {
         line_num_int ++;
     }
-    PLM_DEBUG_PRINT("line_num_int = %d\n", line_num_int);
+#ifdef PLM_DEBUG_MODE
+    PLM_DEBUG_PRINT("line_num_int [%d]\n", line_num_int);
+#endif
     rewind(stream);
     policy_grp->num_policy = line_num_int;
     policy_grp->policy_data =
@@ -125,20 +131,25 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
 
     line_num_int = 0;
     while ((nread = getline(&indata_buf, &len, stream)) != -1) {
-        //printf("Retrieved line of length %zu:\n", nread);/
-        if(1 == nread) break;
-
         RAII_VARIABLE(char *, user_list, NULL, free);
+        char *tmp_ptr = indata_buf;
+
+        if(1 == nread) break;
         indata_buf[nread-1] = '\x0';
         user_list = calloc(nread, sizeof(char));
-        char *tmp_ptr = indata_buf;
+
         memcpy(&policy_grp->policy_data[line_num_int].policy_mask, tmp_ptr,
             sizeof(uint8_t));
         tmp_ptr +=1;
         memcpy(&policy_grp->policy_data[line_num_int].num_user_list, tmp_ptr,
             sizeof(int32_t));
         tmp_ptr +=4;
-        PLM_DEBUG_PRINT("tmp_ptr = %s\n", tmp_ptr);
+#ifdef PLM_DEBUG_MODE
+        PLM_DEBUG_PRINT("[%2x][%4d][%s]\n",
+            policy_grp->policy_data[line_num_int].policy_mask,
+            policy_grp->policy_data[line_num_int].num_user_list,
+            tmp_ptr);
+#endif
         strcpy(user_list, tmp_ptr);
 
         __parserUserList(
@@ -146,9 +157,9 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
             &policy_grp->policy_data[line_num_int]);
 
         line_num_int ++;
-        free(indata_buf);
+        free_to_NULL(indata_buf);
     }
-    //free(indata_buf);
+    free_to_NULL(indata_buf);
     fclose(stream);
     return ERROR_CODE_SUCCESS;
 }
@@ -160,8 +171,7 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
     char *line = NULL;
     size_t len = 0;
     ssize_t nread;
-    //autofree_type_ptr char *policy_path = NULL;
-    //autofree_type_ptr char *user_list = NULL;
+
     RAII_VARIABLE(char *, policy_path, NULL, free);
     RAII_VARIABLE(char *, user_list, NULL, free);
 
@@ -169,7 +179,9 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
     check_null_input(policy_grp);
 
     policy_path = __conver_to_policy_file_path(path);
-    PLM_DEBUG_PRINT("policy_path = %s\n", policy_path);
+#ifdef PLM_DEBUG_MODE
+    PLM_DEBUG_PRINT("policy_path [%s]\n", policy_path);
+#endif
     stream = fopen(policy_path, "w+");
     if (stream == NULL) {
         return ERROR_CODE_PATH_ERROR;
@@ -180,9 +192,12 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
         char tmp_buf[1024];
         memset(tmp_buf, 0, sizeof(tmp_buf));
         char *ptr = tmp_buf;
-        memcpy(ptr, &policy_grp->policy_data[i].policy_mask, sizeof(uint8_t));
+
+        memcpy(ptr, &policy_grp->policy_data[i].policy_mask,
+            sizeof(uint8_t));
         ptr +=1;
-        memcpy(ptr, &policy_grp->policy_data[i].num_user_list, sizeof(int32_t));
+        memcpy(ptr, &policy_grp->policy_data[i].num_user_list,
+            sizeof(int32_t));
         ptr +=4;
         for(int num_user=0;
             num_user<policy_grp->policy_data[i].num_user_list; num_user++)
@@ -195,6 +210,23 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
         fwrite(tmp_buf, sizeof(char), total_len, stream);
     }
     fclose(stream);
+    return ERROR_CODE_SUCCESS;
+}
+
+int del_policy(const char *path)
+{
+    RAII_VARIABLE(char *, policy_path, NULL, free);
+
+    check_null_input(path);
+
+    policy_path = __conver_to_policy_file_path(path);
+#ifdef PLM_DEBUG_MODE
+    PLM_DEBUG_PRINT("policy_path [%s]\n", policy_path);
+#endif
+    if(0 != remove(policy_path))
+    {
+        PLM_DEBUG_PRINT("policy_path [%s] not exist\n", policy_path);
+    }
     return ERROR_CODE_SUCCESS;
 }
 
@@ -223,7 +255,6 @@ int check_policy(
     autofree_tPolicyGrp tPolicyGrp read_policy_grp_data;
     memset(&read_policy_grp_data, 0, sizeof(tPolicyGrp));
 
-    //autofree_type_ptr char *policy_path = NULL;
     RAII_VARIABLE(char *, policy_path, NULL, free);
 
     check_null_input(path);

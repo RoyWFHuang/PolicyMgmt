@@ -5,6 +5,7 @@
 
 int main()
 {
+    int ret_int = 0;
     autofree_tPolicyGrp tPolicyGrp wgrp;
     autofree_tPolicyGrp tPolicyGrp rgrp;
     memset(&wgrp, 0, sizeof(wgrp));
@@ -29,9 +30,9 @@ int main()
     strcpyALL(wgrp.policy_data[i].user_list[1], "roy_test1");
     strcpyALL(wgrp.policy_data[i].user_list[2], "roy_test2");
 
-    write_policy("test_policy_file", &wgrp);
+    write_policy("/test_policy_file", &wgrp);
 
-    read_policy("test_policy_file", &rgrp);
+    read_policy("/test_policy_file", &rgrp);
 
     PLM_DEBUG_PRINT("start read data[%d]\n", rgrp.num_policy);
     for(int i=0; i<rgrp.num_policy; i++)
@@ -49,7 +50,17 @@ int main()
         }
 
     }
+    ret_int = check_policy("/md/test_policy_file", "roy", __POILCY_READ);
+    PLM_DEBUG_PRINT("ret_int = %d\n", ret_int);
+    ret_int = check_policy("/test_policy_file", "roy", __POILCY_READ);
+    PLM_DEBUG_PRINT("ret_int = %d\n", ret_int);
+    ret_int = check_policy("/test_policy_file", "roy1", __POILCY_READ);
+    PLM_DEBUG_PRINT("ret_int = %d\n", ret_int);
+    ret_int = check_policy("/test_policy_file", "roy1", __POILCY_WRITE);
+    PLM_DEBUG_PRINT("ret_int = %d\n", ret_int);
 
+    del_policy("/test_policy_file");
+    del_policy("/md/test_policy_file");
 
     return 0;
 }
