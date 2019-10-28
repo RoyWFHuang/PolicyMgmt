@@ -7,9 +7,8 @@
 #include "lib_method.h"
 #include "macro.h"
 #include "define.h"
-/**
- * policy:num_of_user:user_list
- **/
+
+
 static int __parserUserList(const char *user_list,
     tPolicyStruct *policy_data)
 {
@@ -85,7 +84,7 @@ static int __check_policy(const char* user,
     {
         tPolicyStruct *tmp_policy =
             &polcy_grp->policy_data[policy_index];
-        if(tmp_policy->policy_mask & mask)
+        if(tmp_policy->mask & mask)
         {
             return __check_user_exists(user,
                 (const char**)tmp_policy->user_list,
@@ -94,8 +93,177 @@ static int __check_policy(const char* user,
     }
     return ERROR_CODE_NOT_EXIST;
 }
+static int __dup_policy_rule(
+    tPolicyStruct *dst, tPolicyStruct *src)
+{
+    check_null_input(dst);
+    check_null_input(src);
+    memcpy(dst, src, sizeof(tPolicyStruct));
+    dst->user_list = calloc(src->num_user_list, sizeof(char*));
+    for(int i=0; i<src->num_user_list; i++)
+    {
+        strcpyALL(dst->user_list[i], src->user_list[i]);
+    }
+}
 
+static tPolicyStruct *__merge_policy_rule(int8_t mask,
+    const tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
+{
+    tPolicyStruct *dst = NULL, *src = NULL;
+    tPolicyStruct *ret_policy = NULL;
+    for(int num_pol=0; num_pol < dest_grp->num_policy; num_pol++)
+    {
+        if(mask & dest_grp->policy_data[num_pol].mask)
+        {
+            dst = &dest_grp->policy_data[num_pol];
+            break;
+        }
+    }
+    for(int num_pol=0; num_pol < src_grp->num_policy; num_pol++)
+    {
+        if(mask & src_grp->policy_data[num_pol].mask)
+        {
+            src = &src_grp->policy_data[num_pol];
+            break;
+        }
+    }
 
+    if(NULL != dst && NULL != src)
+    {
+        ret_policy = calloc(1, sizeof(tPolicyStruct));
+
+        ret_policy->num_user_list = dst->num_user_list;
+
+        for(int src_index=0; src_index<src->num_user_list; src_index++)
+        {
+            int8_t get_flag = 0;
+            for(int dst_index=0; dst_index<dst->num_user_list; dst_index++)
+            {
+                if(!strcmp(src->user_list[src_index],
+                    dst->user_list[dst_index]) )
+                {
+                    get_flag = 1;
+                    break;
+                }
+            }
+            if(!get_flag) ret_policy->num_user_list++;
+        }
+
+        ret_policy->user_list = calloc(ret_policy->num_user_list,
+            sizeof(char*));
+
+        for(int dst_index=0; dst_index<dst->num_user_list; dst_index++)
+        {
+            strcpyALL(ret_policy->user_list[dst_index],
+                dst->user_list[dst_index]);
+        }
+
+        int cnt = dst->num_user_list;
+
+        for(int src_index=0; src_index<src->num_user_list; src_index++)
+        {
+            int8_t get_flag = 0;
+            for(int dst_index=0; dst_index<dst->num_user_list; dst_index++)
+            {
+                if(!strcmp(src->user_list[src_index],
+                    dst->user_list[dst_index]) )
+                {
+                    get_flag = 1;
+                    break;
+                }
+            }
+            if(!get_flag)
+            {
+                strcpyALL(ret_policy->user_list[cnt++],
+                    src->user_list[src_index]);
+            }
+        }
+    }
+    else if(NULL == dst && NULL != src)
+    {
+        ret_policy = calloc(1, sizeof(tPolicyStruct));
+         __dup_policy_rule(ret_policy, src);
+    }
+    else if(NULL == src && NULL != dst)
+    {
+        ret_policy = calloc(1, sizeof(tPolicyStruct));
+        __dup_policy_rule(ret_policy, dst);
+    }
+
+    return ret_policy;
+}
+
+static tPolicyGrp *__merge_policy(
+    const tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
+{
+    tPolicyGrp *ret_data = NULL;
+    tPolicyStruct *read_rule = NULL;
+    tPolicyStruct *write_rule = NULL;
+
+    read_rule = __merge_policy_rule(__POILCY_READ, dest_grp, src_grp);
+    write_rule = __merge_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
+
+    if(NULL != read_rule && NULL != write_rule)
+    {
+        ret_data = calloc(1, sizeof(tPolicyGrp));
+        ret_data->num_policy = 2;
+        ret_data->policy_data = calloc(ret_data->num_policy,
+            sizeof(tPolicyStruct));
+        __dup_policy_rule(&ret_data->policy_data[0], read_rule);
+        __dup_policy_rule(&ret_data->policy_data[1], write_rule);
+    }
+    else if(NULL == read_rule && NULL != write_rule)
+    {
+        ret_data = calloc(1, sizeof(tPolicyGrp));
+        ret_data->num_policy = 1;
+        ret_data->policy_data = calloc(ret_data->num_policy,
+            sizeof(tPolicyStruct));
+        __dup_policy_rule(&ret_data->policy_data[0], write_rule);
+    }
+    else if(NULL != read_rule && NULL == write_rule)
+    {
+        ret_data = calloc(1, sizeof(tPolicyGrp));
+        ret_data->num_policy = 1;
+        ret_data->policy_data = calloc(ret_data->num_policy,
+            sizeof(tPolicyStruct));
+        __dup_policy_rule(&ret_data->policy_data[0], read_rule);
+    }
+    free_tPolicyStruct(read_rule);
+    free_tPolicyStruct(write_rule);
+    return ret_data;
+}
+
+static tPolicyGrp *__remove_part_of_policy(
+    tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
+{
+
+}
+
+/**
+  * Hint :  Input data  is no be free in this func
+  *
+  * read the policy file into the policy group
+  *
+  * @param path type : const char *
+  *     policy file path which want to read
+  * @param policy_grp type : const tPolicyGrp *
+  *     return policy rule in this group, flowing is sub data
+  * * * @param policy_data type : int
+  *         number of policy rule
+  * * * @param policy_data type : tPolicyStruct
+  *         policy rule setting
+  * * * * * @param mask type : uint8_t
+  *             policy mask see in policy_table.h define
+  * * * * * @param num_user_list type : int
+  *             number of uses in list
+  * * * * * @param user_list type : char **
+  *             user listing under the rule
+  *
+  * @return int
+  *     ERROR_CODE_SUCCESS
+  *     ERROR_CODE_PATH_ERROR
+  *     ERROR_CODE_NULL_POINT_EXCEPTION
+  */
 int read_policy(const char *path, tPolicyGrp *policy_grp)
 {
     FILE *stream;
@@ -113,12 +281,11 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
     PLM_DEBUG_PRINT("policy_path [%s]\n", policy_path);
 #endif
     stream = fopen(policy_path, "r");
-    if (NULL == stream) {
-        return ERROR_CODE_PATH_ERROR;
-    }
+    if (NULL == stream) return ERROR_CODE_PATH_ERROR;
 
     int line_num_int = 0;
-    while ((nread = getline(&indata_buf, &len, stream)) != -1) {
+    while ((nread = getline(&indata_buf, &len, stream)) != -1)
+    {
         line_num_int ++;
     }
 #ifdef PLM_DEBUG_MODE
@@ -130,7 +297,8 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
         calloc(line_num_int, sizeof(tPolicyStruct));
 
     line_num_int = 0;
-    while ((nread = getline(&indata_buf, &len, stream)) != -1) {
+    while ((nread = getline(&indata_buf, &len, stream)) != -1)
+    {
         RAII_VARIABLE(char *, user_list, NULL, free);
         char *tmp_ptr = indata_buf;
 
@@ -138,7 +306,7 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
         indata_buf[nread-1] = '\x0';
         user_list = calloc(nread, sizeof(char));
 
-        memcpy(&policy_grp->policy_data[line_num_int].policy_mask, tmp_ptr,
+        memcpy(&policy_grp->policy_data[line_num_int].mask, tmp_ptr,
             sizeof(uint8_t));
         tmp_ptr +=1;
         memcpy(&policy_grp->policy_data[line_num_int].num_user_list, tmp_ptr,
@@ -146,7 +314,7 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
         tmp_ptr +=4;
 #ifdef PLM_DEBUG_MODE
         PLM_DEBUG_PRINT("[%2x][%4d][%s]\n",
-            policy_grp->policy_data[line_num_int].policy_mask,
+            policy_grp->policy_data[line_num_int].mask,
             policy_grp->policy_data[line_num_int].num_user_list,
             tmp_ptr);
 #endif
@@ -164,7 +332,31 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
     return ERROR_CODE_SUCCESS;
 }
 
-
+/**
+  * Hint :  Input data  is no be free in this func
+  *
+  * Write the policy group into policy file
+  *
+  * @param path type : const char *
+  *     policy file path
+  * @param policy_grp type : const tPolicyGrp *
+  *     input policy rule in this group, flowing is sub data
+  * * * @param policy_data type : int
+  *         number of policy rule
+  * * * @param policy_data type : tPolicyStruct
+  *         policy rule setting
+  * * * * * @param mask type : uint8_t
+  *             policy mask see in policy_table.h define
+  * * * * * @param num_user_list type : int
+  *             number of uses in list
+  * * * * * @param user_list type : char **
+  *             user listing under the rule
+  *
+  * @return int
+  *     ERROR_CODE_SUCCESS
+  *     ERROR_CODE_PATH_ERROR
+  *     ERROR_CODE_NULL_POINT_EXCEPTION
+  */
 int write_policy(const char *path, const tPolicyGrp *policy_grp)
 {
     FILE *stream;
@@ -183,9 +375,8 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
     PLM_DEBUG_PRINT("policy_path [%s]\n", policy_path);
 #endif
     stream = fopen(policy_path, "w+");
-    if (stream == NULL) {
-        return ERROR_CODE_PATH_ERROR;
-    }
+    if (stream == NULL) return ERROR_CODE_PATH_ERROR;
+
     for(int i=0; i<policy_grp->num_policy; i++)
     {
         int total_len = 0;
@@ -193,7 +384,7 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
         memset(tmp_buf, 0, sizeof(tmp_buf));
         char *ptr = tmp_buf;
 
-        memcpy(ptr, &policy_grp->policy_data[i].policy_mask,
+        memcpy(ptr, &policy_grp->policy_data[i].mask,
             sizeof(uint8_t));
         ptr +=1;
         memcpy(ptr, &policy_grp->policy_data[i].num_user_list,
@@ -213,6 +404,18 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
     return ERROR_CODE_SUCCESS;
 }
 
+/**
+  * Hint :  Input data  is no be free in this func
+  *
+  * Remove the policy file
+  *
+  * @param path type : const char *
+  *     policy file path
+  *
+  * @return int
+  *     ERROR_CODE_SUCCESS
+  *     ERROR_CODE_NULL_POINT_EXCEPTION
+  */
 int del_policy(const char *path)
 {
     RAII_VARIABLE(char *, policy_path, NULL, free);
@@ -228,6 +431,39 @@ int del_policy(const char *path)
         PLM_DEBUG_PRINT("policy_path [%s] not exist\n", policy_path);
     }
     return ERROR_CODE_SUCCESS;
+}
+
+int modify_policy(const char *path, const eModifyRule rule,
+    const tPolicyGrp *policy_grp)
+{
+    RAII_VARIABLE(char *, policy_path, NULL, free);
+    autofree_tPolicyGrp tPolicyGrp read_grp;
+    tPolicyGrp *write_bk_grp = NULL;
+    memset(&read_grp, 0, sizeof(tPolicyGrp));
+    int ret = ERROR_CODE_SUCCESS;
+
+    check_null_input(path);
+    check_null_input(policy_grp);
+
+    ret = read_policy(path, &read_grp);
+    if(ERROR_CODE_SUCCESS == ret)
+    {
+        switch(rule)
+        {
+            case eMODIFYRULE_ADD:
+                write_bk_grp = __merge_policy(&read_grp, policy_grp);
+                break;
+            case eMODIFYRULE_DEL:
+                write_bk_grp = __remove_part_of_policy(&read_grp, policy_grp);
+                break;
+            default:
+                PLM_ERR_PRINT("Error input modify type[%02x]", rule);
+                break;
+        }
+        ret = write_policy(path, write_bk_grp);
+        free_tPolicyGrp(write_bk_grp);
+    }
+    return ret;
 }
 
 /**

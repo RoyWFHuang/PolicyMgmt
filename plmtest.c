@@ -14,7 +14,7 @@ int main()
     wgrp.num_policy = 2;
     wgrp.policy_data = calloc(wgrp.num_policy, sizeof(tPolicyStruct));
 
-    wgrp.policy_data[i].policy_mask = __POILCY_READ;
+    wgrp.policy_data[i].mask = __POILCY_READ;
     wgrp.policy_data[i].num_user_list = 1;
     wgrp.policy_data[i].user_list =
         calloc(wgrp.policy_data[i].num_user_list, sizeof(char *));
@@ -22,7 +22,7 @@ int main()
     //strcpyALL(wgrp.policy_data[i].user_list[1], "roy_test1");
     //strcpyALL(wgrp.policy_data[i].user_list[2], "roy_test2");
     i++;
-    wgrp.policy_data[i].policy_mask = __POILCY_WRITE;
+    wgrp.policy_data[i].mask = __POILCY_WRITE;
     wgrp.policy_data[i].num_user_list = 3;
     wgrp.policy_data[i].user_list =
         calloc(wgrp.policy_data[i].num_user_list, sizeof(char *));
@@ -38,7 +38,7 @@ int main()
     for(int i=0; i<rgrp.num_policy; i++)
     {
 
-        PLM_DEBUG_PRINT("mask = %x\n", rgrp.policy_data[i].policy_mask);
+        PLM_DEBUG_PRINT("mask = %x\n", rgrp.policy_data[i].mask);
         PLM_DEBUG_PRINT("num_user_list = %d\n", rgrp.policy_data[i].num_user_list);
         int cnt = rgrp.policy_data[i].num_user_list;
         //if(rgrp.policy_data[i].num_user_list > 3)
