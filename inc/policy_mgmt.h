@@ -35,7 +35,7 @@ typedef struct _tPolicyStruct
 typedef struct _tPolicyGrp
 {
     int num_policy;
-    tPolicyStruct *policy_data;
+    tPolicyStruct **policy_data;
 }tPolicyGrp;
 
 /**
