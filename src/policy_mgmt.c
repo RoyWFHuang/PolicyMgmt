@@ -29,11 +29,12 @@ static int __parserUserList(const char *user_list,
     {
         get_last_folder_name(&lnd);
         strcpyALL(policy_data->user_list[i], lnd.last_name_pchar);
-        char *tmp_path = NULL;
+        RAII_VARIABLE(char *, tmp_path, NULL, free);
         strcpyALL(tmp_path, lnd.prefix_path_pchar);
         free_tLastNameData(lnd);
         strcpyALL(lnd.input_path_pchar, tmp_path);
     }
+    free_tLastNameData(lnd);
     return ERROR_CODE_SUCCESS;
 }
 
@@ -629,6 +630,7 @@ int modify_policy(const char *path, const eModifyRule rule,
         }
         ret = write_policy(path, write_bk_grp);
         free_tPolicyGrp(write_bk_grp);
+        free_to_NULL(write_bk_grp);
     }
     return ret;
 }
