@@ -253,9 +253,149 @@ __merge_policy_exit_lab_1 :
     return ret_data;
 }
 
+
+static tPolicyStruct *__remove_part_of_policy_rule(int8_t mask,
+    const tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
+{
+    tPolicyStruct *dst = NULL, *src = NULL;
+    tPolicyStruct *ret_policy = NULL;
+    for(int num_pol=0; num_pol < dest_grp->num_policy; num_pol++)
+    {
+        if(mask & dest_grp->policy_data[num_pol]->mask)
+        {
+            dst = dest_grp->policy_data[num_pol];
+            break;
+        }
+    }
+
+    for(int num_pol=0; num_pol < src_grp->num_policy; num_pol++)
+    {
+        if(mask & src_grp->policy_data[num_pol]->mask)
+        {
+            src = src_grp->policy_data[num_pol];
+            break;
+        }
+    }
+
+    if(NULL != dst && NULL != src)
+    {
+        ret_policy = calloc(1, sizeof(tPolicyStruct));
+        ret_policy->mask = mask;
+        ret_policy->num_user_list = dst->num_user_list;
+
+        for(int src_index=0; src_index<src->num_user_list; src_index++)
+        {
+            int8_t get_flag = 0;
+            for(int dst_index=0; dst_index<dst->num_user_list; dst_index++)
+            {
+                if(!strcmp(src->user_list[src_index],
+                    dst->user_list[dst_index]) )
+                {
+                    get_flag = 1;
+                    break;
+                }
+            }
+            if(get_flag) ret_policy->num_user_list--;
+        }
+
+        ret_policy->user_list =
+            calloc(ret_policy->num_user_list, sizeof(char*));
+        int cnt = 0;
+        for(int dst_index=0; dst_index<dst->num_user_list; dst_index++)
+        {
+            int8_t get_flag = 0;
+            for(int src_index=0; src_index<src->num_user_list; src_index++)
+            {
+                if(!strcmp(src->user_list[src_index],
+                    dst->user_list[dst_index]) )
+                {
+                    get_flag = 1;
+                    break;
+                }
+            }
+            if(!get_flag)
+            {
+                strcpyALL(ret_policy->user_list[cnt],
+                    dst->user_list[dst_index]);
+                cnt++;
+            }
+        }
+    }
+    else if(NULL == dst && NULL != src)
+    {
+        ret_policy = calloc(1, sizeof(tPolicyStruct));
+         __dup_policy_rule(ret_policy, src);
+    }
+    else if(NULL == src && NULL != dst)
+    {
+        ret_policy = calloc(1, sizeof(tPolicyStruct));
+        __dup_policy_rule(ret_policy, dst);
+    }
+
+    return ret_policy;
+}
+
 static tPolicyGrp *__remove_part_of_policy(
     tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
 {
+    tPolicyGrp *ret_data = NULL;
+
+    if(!(dest_grp->num_policy | src_grp->num_policy))
+    {
+        goto __remove_part_of_policy_exit_lab_1;
+    }
+    int8_t mask_dst = 0;
+    int8_t mask_src = 0;
+    int8_t mask = 0;
+    for(int i=0;i<dest_grp->num_policy;i++)
+    {
+        mask_dst |= dest_grp->policy_data[i]->mask;
+    }
+
+    for(int i=0;i<src_grp->num_policy;i++)
+    {
+        mask_src |= src_grp->policy_data[i]->mask;
+    }
+    mask = mask_dst & mask_src;
+    switch(mask)
+    {
+        case 0x00:
+#ifdef PLM_DEBUG_MODE
+            PLM_DEBUG_PRINT("do nothing.....\n");
+#endif
+            break;
+        case __POILCY_READ:
+            ret_data = calloc(1, sizeof(tPolicyGrp));
+            ret_data->num_policy = 1;
+            ret_data->policy_data = calloc(ret_data->num_policy,
+                sizeof(tPolicyStruct *));
+            ret_data->policy_data[0] =
+                __remove_part_of_policy_rule(__POILCY_READ, dest_grp, src_grp);
+            break;
+        case __POILCY_WRITE:
+            ret_data = calloc(1, sizeof(tPolicyGrp));
+            ret_data->num_policy = 1;
+            ret_data->policy_data = calloc(ret_data->num_policy,
+                sizeof(tPolicyStruct *));
+            ret_data->policy_data[0] =
+                __remove_part_of_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
+            break;
+        case (__POILCY_READ|__POILCY_WRITE):
+            ret_data = calloc(1, sizeof(tPolicyGrp));
+            ret_data->num_policy = 2;
+            ret_data->policy_data = calloc(ret_data->num_policy,
+                sizeof(tPolicyStruct *));
+            ret_data->policy_data[0] =
+                __remove_part_of_policy_rule(__POILCY_READ, dest_grp, src_grp);
+            ret_data->policy_data[1] =
+                __remove_part_of_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
+            break;
+        default:
+            PLM_ERR_PRINT("Error mask\n");
+            break;
+    }
+__remove_part_of_policy_exit_lab_1 :
+    return ret_data;
 
 }
 
