@@ -626,12 +626,19 @@ int modify_policy(const char *path, const eModifyRule rule,
                 break;
             default:
                 PLM_ERR_PRINT("Error input modify type[%02x]", rule);
+                ret = ERROR_CODE_NOT_EXIST;
+                goto modify_policy_exit_lab_1;
                 break;
         }
         ret = write_policy(path, write_bk_grp);
         free_tPolicyGrp(write_bk_grp);
         free_to_NULL(write_bk_grp);
     }
+    else if(ERROR_CODE_PATH_ERROR == ret)
+    {
+        ret = write_policy(path, policy_grp);
+    }
+modify_policy_exit_lab_1:
     return ret;
 }
 
