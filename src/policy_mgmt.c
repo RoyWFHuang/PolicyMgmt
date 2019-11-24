@@ -601,6 +601,24 @@ int del_policy(const char *path)
     return ERROR_CODE_SUCCESS;
 }
 
+/**
+  * Hint :  Input data  is no be free in this func
+  *
+  * Change the policy rule
+  *
+  * @param path type : const char *
+  *     policy file path
+  *
+  * @param rule type : const eModifyRule
+  *     modify rule see in eModifyRule
+  *
+  * @param policy_grp type : const tPolicyGrp *
+  *     modify content
+  *
+  * @return int
+  *     ERROR_CODE_SUCCESS
+  *     ERROR_CODE_NULL_POINT_EXCEPTION
+  */
 int modify_policy(const char *path, const eModifyRule rule,
     const tPolicyGrp *policy_grp)
 {
