@@ -153,6 +153,23 @@ typedef enum _eModifyRule{
 int modify_policy(const char *path, const eModifyRule rule,
     const tPolicyGrp *policy_grp);
 
+/**
+  * Hint :  Input data  is no be free in this func
+  *
+  * full copy tPolicyStruct
+  *
+  * @param dst type : tPolicyStruct *
+  *     dest. data
+  * @param src type : tPolicyStruct *
+  *     source data
+  *
+  * @return int
+  *     ERROR_CODE_SUCCESS
+  *     ERROR_CODE_NULL_POINT_EXCEPTION
+  */
+int full_copy_tPolicyStruct(tPolicyStruct *restrict dst,
+    tPolicyStruct *restrict src);
+
 void free_tPolicyGrp(tPolicyGrp *policy_grp);
 void free_tPolicyStruct(tPolicyStruct *policy);
 
