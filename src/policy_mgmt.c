@@ -220,31 +220,29 @@ static tPolicyGrp *__merge_policy(
     switch(mask)
     {
         case __POILCY_READ:
-            ret_data = calloc(1, sizeof(tPolicyGrp));
-            ret_data->num_policy = 1;
-            ret_data->policy_data = calloc(ret_data->num_policy,
-                sizeof(tPolicyStruct *));
-            ret_data->policy_data[0] =
-                __merge_policy_rule(__POILCY_READ, dest_grp, src_grp);
+            CREATE_PGRP(ret_data, 1);
+            WRITE_PGRP(ret_data, 0, __POILCY_READ, dest_grp, src_grp);
             break;
         case __POILCY_WRITE:
-            ret_data = calloc(1, sizeof(tPolicyGrp));
-            ret_data->num_policy = 1;
-            ret_data->policy_data = calloc(ret_data->num_policy,
-                sizeof(tPolicyStruct *));
-            ret_data->policy_data[0] =
-                __merge_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
+            CREATE_PGRP(ret_data, 1);
+            WRITE_PGRP(ret_data, 0, __POILCY_WRITE, dest_grp, src_grp);
             break;
-        case (__POILCY_READ|__POILCY_WRITE):
-            ret_data = calloc(1, sizeof(tPolicyGrp));
-            ret_data->num_policy = 2;
-            ret_data->policy_data = calloc(ret_data->num_policy,
-                sizeof(tPolicyStruct *));
-            ret_data->policy_data[0] =
-                __merge_policy_rule(__POILCY_READ, dest_grp, src_grp);
-            ret_data->policy_data[1] =
-                __merge_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
+        case (__POILCY_READ| __POILCY_WRITE):
+            CREATE_PGRP(ret_data, 2);
+            WRITE_PGRP(ret_data, 0, __POILCY_READ, dest_grp, src_grp);
+            WRITE_PGRP(ret_data, 1, __POILCY_WRITE, dest_grp, src_grp);
             break;
+        case (__POILCY_READ| __POILCY_WRITE | __POILCY_DEL):
+            CREATE_PGRP(ret_data, 3);
+            WRITE_PGRP(ret_data, 0, __POILCY_READ, dest_grp, src_grp);
+            WRITE_PGRP(ret_data, 1, __POILCY_WRITE, dest_grp, src_grp);
+            WRITE_PGRP(ret_data, 2, __POILCY_DEL, dest_grp, src_grp);
+        case (__POILCY_READ| __POILCY_WRITE | __POILCY_DEL | __POILCY_CREAT):
+            CREATE_PGRP(ret_data, 3);
+            WRITE_PGRP(ret_data, 0, __POILCY_READ, dest_grp, src_grp);
+            WRITE_PGRP(ret_data, 1, __POILCY_WRITE, dest_grp, src_grp);
+            WRITE_PGRP(ret_data, 2, __POILCY_DEL, dest_grp, src_grp);
+            WRITE_PGRP(ret_data, 3, __POILCY_CREAT, dest_grp, src_grp);
         default:
             PLM_ERR_PRINT("Error mask\n");
             break;
@@ -524,9 +522,9 @@ int read_policy(const char *path, tPolicyGrp *policy_grp)
 int write_policy(const char *path, const tPolicyGrp *policy_grp)
 {
     FILE *stream;
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t nread;
+    //char *line = NULL;
+    //size_t len = 0;
+    //ssize_t nread;
 
     RAII_VARIABLE(char *, policy_path, NULL, free);
     RAII_VARIABLE(char *, user_list, NULL, free);

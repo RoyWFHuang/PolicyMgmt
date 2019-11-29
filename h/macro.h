@@ -76,4 +76,15 @@
     vartype varname __attribute__((cleanup(_dtor_ ## varname))) = (initval)
 
 
+#define CREATE_PGRP(pgrp, num) do{\
+    pgrp = calloc(num, sizeof(tPolicyGrp));\
+    pgrp->num_policy = num;\
+    pgrp->policy_data = calloc(num,  sizeof(tPolicyStruct *));\
+}while(0)
+
+#define WRITE_PGRP(pgrp, ind, policy, dst, src) do{\
+    pgrp->policy_data[ind] =\
+        __merge_policy_rule(policy, dst, src);\
+}while(0)
+
 #endif
