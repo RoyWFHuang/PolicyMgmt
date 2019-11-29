@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: make
-      run: make
-    - name: make test
-      run: make test
+      - uses: actions/checkout@v 
+      - name: make
+        run: make
+      - name: make test
+        run: make test
