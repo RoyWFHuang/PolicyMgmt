@@ -749,13 +749,20 @@ int check_policy(const char *path, const uint8_t mask)
             return ERROR_CODE_NOT_EXIST;
         }
         ret = check_policy(
-            lnd.prefix_path_pchar, uname, mask);
+            lnd.prefix_path_pchar, mask);
         free_tLastNameData(lnd);
     }
     else
     {
+#ifdef PLM_DEBUG_MODE
+        PLM_DEBUG_PRINT("get the policy file [%x][%s] ",
+            mask, policy_real_path);
+#endif
         ret = __check_policy(uname, &read_policy_grp_data, mask);
     }
+#ifdef XXXX_PLATFORM
+    }
+#endif
     return ret;
 }
 
