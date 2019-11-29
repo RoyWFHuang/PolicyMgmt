@@ -51,11 +51,9 @@ static int __parserUserList(const char *user_list,
     policy_data->user_list =
         calloc(policy_data->num_user_list, sizeof(char *));
 
-    char *usr_pchar = NULL;
-
     tLastNameData lnd;
     memset(&lnd, 0,sizeof(tLastNameData) );
-    strcpyALL(lnd.input_path_pchar, user_list);
+    strcpyALL(lnd.input_path_pchar, (char *)user_list);
     for(int i = policy_data->num_user_list-1; i >= 0; i--)
     {
         get_last_folder_name(&lnd);
@@ -76,7 +74,7 @@ static char *__conver_to_policy_file_path(const char *path){
 
     tLastNameData lnd;
     memset(&lnd, 0,sizeof(tLastNameData) );
-    strcpyALL(lnd.input_path_pchar, path);
+    strcpyALL(lnd.input_path_pchar, (char *)path);
     get_last_folder_name(&lnd);
     strcpyALL(policy_path, MD_DIR_PATH, lnd.prefix_path_pchar,
         POLICY_PREFIX, lnd.last_name_pchar);
@@ -109,7 +107,7 @@ static int __check_policy(const char* user,
 {
     check_null_input(polcy_grp);
     check_null_input(polcy_grp->policy_data);
-
+    int ret_int = ERROR_CODE_NOT_EXIST;
     for(int policy_index = 0;
         policy_index < polcy_grp->num_policy;
         policy_index++)
@@ -118,19 +116,22 @@ static int __check_policy(const char* user,
             polcy_grp->policy_data[policy_index];
         if(tmp_policy->mask & mask)
         {
-            return __check_user_exists(user,
+            if(ERROR_CODE_SUCCESS != __check_user_exists(user,
                 (const char**)tmp_policy->user_list,
-                tmp_policy->num_user_list);
+                tmp_policy->num_user_list) )
+            {
+                return ERROR_CODE_NOT_EXIST;
+            }
+            ret_int = ERROR_CODE_SUCCESS;
         }
     }
-    return ERROR_CODE_NOT_EXIST;
+    return ret_int;
 }
 
-static int __dup_policy_rule(
+static void __dup_policy_rule(
     tPolicyStruct *dst, tPolicyStruct *src)
 {
-    check_null_input(dst);
-    check_null_input(src);
+    if(NULL == dst || NULL == src) return;
     memcpy(dst, src, sizeof(tPolicyStruct));
     dst->user_list = calloc(src->num_user_list, sizeof(char*));
     for(int i=0; i<src->num_user_list; i++)
@@ -216,7 +217,7 @@ static tPolicyStruct *__merge_policy_rule(int8_t mask,
     else if(NULL == dst && NULL != src)
     {
         ret_policy = calloc(1, sizeof(tPolicyStruct));
-         __dup_policy_rule(ret_policy, src);
+        __dup_policy_rule(ret_policy, src);
     }
     else if(NULL == src && NULL != dst)
     {
@@ -226,6 +227,7 @@ static tPolicyStruct *__merge_policy_rule(int8_t mask,
 
     return ret_policy;
 }
+
 
 static tPolicyGrp *__merge_policy(
     const tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
@@ -354,7 +356,7 @@ static tPolicyStruct *__remove_part_of_policy_rule(int8_t mask,
     else if(NULL == dst && NULL != src)
     {
         ret_policy = calloc(1, sizeof(tPolicyStruct));
-         __dup_policy_rule(ret_policy, src);
+        __dup_policy_rule(ret_policy, src);
     }
     else if(NULL == src && NULL != dst)
     {
