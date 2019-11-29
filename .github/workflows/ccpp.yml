@@ -6,9 +6,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: make lib
-        run: echo "make lib"
-      - name: make test
-        run: echo "make test"
+    - uses: actions/checkout@v1
+    - name: make lib
+      run: echo "make lib"
+    - name: make test
+      run: echo "make test"
 
