@@ -1,15 +1,13 @@
-name: C/C++ CI
+name: C_CI
 
 on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    
     steps:
-      - uses: actions/checkout@v 
-      - name: make
-        run: make
+      - uses: actions/checkout@v
+      - name: make lib
+        run: echo "make lib"
       - name: make test
-        run: make test
+        run: echo "make test"
