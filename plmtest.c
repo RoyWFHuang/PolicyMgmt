@@ -96,21 +96,21 @@ void full_case()
 
     }
 
-    ret_int = check_policy("/md/test_policy_file", "roy", __POILCY_READ);
-    PLM_DEBUG_PRINT(" * [%s][%s][%2x][%d]\n",
-        "/md/test_policy_file", "roy", __POILCY_READ, ret_int);
+    ret_int = check_policy("roy/md/test_policy_file", __POILCY_READ);
+    PLM_DEBUG_PRINT(" * [%s][%2x][%d]\n",
+        "roy/md/test_policy_file", __POILCY_READ, ret_int);
 
-    ret_int = check_policy("/test_policy_file", "roy", __POILCY_READ);
-    PLM_DEBUG_PRINT(" * [%s][%s][%2x][%d]\n",
-        "/test_policy_file", "roy", __POILCY_READ, ret_int);
+    ret_int = check_policy("roy/test_policy_file", __POILCY_READ);
+    PLM_DEBUG_PRINT(" * [%s][%2x][%d]\n",
+        "roy/test_policy_file", __POILCY_READ, ret_int);
 
-    ret_int = check_policy("/test_policy_file", "roy1", __POILCY_READ);
-    PLM_DEBUG_PRINT(" * [%s][%s][%2x][%d]\n",
-        "/test_policy_file", "roy1", __POILCY_READ, ret_int);
+    ret_int = check_policy("roy1/test_policy_file", __POILCY_READ);
+    PLM_DEBUG_PRINT(" * [%s][%2x][%d]\n",
+        "roy1/test_policy_file", __POILCY_READ, ret_int);
 
-    ret_int = check_policy("/test_policy_file", "roy1", __POILCY_WRITE);
-    PLM_DEBUG_PRINT(" * [%s][%s][%2x][%d]\n",
-        "/test_policy_file", "roy1", __POILCY_WRITE, ret_int);
+    ret_int = check_policy("roy1/test_policy_file", __POILCY_WRITE);
+    PLM_DEBUG_PRINT(" * [%s][%2x][%d]\n",
+        "roy1/test_policy_file", __POILCY_WRITE, ret_int);
 
     del_policy("/test_policy_file");
     del_policy("/md/test_policy_file");

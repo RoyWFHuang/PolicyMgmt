@@ -11,7 +11,9 @@
 #ifdef XXXX_PLATFORM
 #include "XXXX_define.h"
 #else
-#define MD_DIR_PATH ""
+#   ifndef MD_DIR_PATH
+#   define MD_DIR_PATH ""
+#   endif
 #endif
 
  /**
