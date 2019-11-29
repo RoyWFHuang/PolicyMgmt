@@ -15,14 +15,6 @@
 #   define POLICY_PREFIX "._md_FILE_POLICY_"
 #endif /* not POLICY_PREFIX */
 
-#ifndef MD_DIR_PATH
-#   define MD_DIR_PATH "/opt/csgfs/metadata/normal/"
-#endif /* not MD_DIR_PATH */
-
-#ifndef MD_RCM_DIR_PATH
-#   define MD_RCM_DIR_PATH "/opt/csgfs/metadata/rcm/"
-#endif /* not MD_RCM_DIR_PATH */
-
 #include "policy_table.h"
 
 typedef struct _tPolicyStruct
@@ -112,9 +104,7 @@ int del_policy(const char *path);
   * Check policy, user can access this path or not
   *
   * @param path type : const char *
-  *     access path policy
-  * @param uname type : const char *
-  *     checking user name
+  *     access path policy, inlucding user information
   * @param mask type : const uint8_t
   *     checking policy, see in policy_table.h
   *
@@ -124,8 +114,7 @@ int del_policy(const char *path);
   *     ERROR_CODE_NULL_POINT_EXCEPTION
   *	    ERROR_CODE_NONEXPECT_ERROR
   */
-int check_policy(
-    const char *path, const char *uname, const uint8_t mask);
+int check_policy(const char *path, const uint8_t mask);
 
 typedef enum _eModifyRule{
     eMODIFYRULE_ADD,

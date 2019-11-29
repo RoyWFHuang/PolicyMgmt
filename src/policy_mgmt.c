@@ -8,6 +8,37 @@
 #include "macro.h"
 #include "define.h"
 
+#ifdef XXXX_PLATFORM
+#include "XXXX_define.h"
+#else
+#define MD_DIR_PATH ""
+#endif
+
+ /**
+  * Hint : input data  is no be free in this func
+  *
+  * get file real path in md
+  *
+  * @param path type : const char *
+  *             input path, e.g: /user/MySyncfolder/path_to/,
+  *                              /user/Collaboration/path_to/
+  * @return char*
+  *     return the real path in md, if return NULL, the real path not exist
+  */
+static char *get_policy_file_real_path(const char *path)
+{
+    char *ptr = NULL;
+    char *real_path = NULL;
+    char resolved_path[1024];
+    autofree_type_ptr char* tmp_path = NULL;
+    strcpyALL(tmp_path, MD_DIR_PATH, (char *)path);
+    ptr = realpath(tmp_path, resolved_path);
+    if(NULL != ptr)
+    {
+        strcpyALL(real_path, (ptr+strlen(MD_DIR_PATH)));
+    }
+    return real_path;
+}
 
 static int __parserUserList(const char *user_list,
     tPolicyStruct *policy_data)
@@ -676,24 +707,39 @@ modify_policy_exit_lab_1:
   *     ERROR_CODE_NULL_POINT_EXCEPTION
   *	    ERROR_CODE_NONEXPECT_ERROR
   */
-int check_policy(
-    const char *path, const char *uname, const uint8_t mask)
+int check_policy(const char *path, const uint8_t mask)
 {
     int ret = ERROR_CODE_SUCCESS;
     autofree_tPolicyGrp tPolicyGrp read_policy_grp_data;
     memset(&read_policy_grp_data, 0, sizeof(tPolicyGrp));
 
     RAII_VARIABLE(char *, policy_path, NULL, free);
+    RAII_VARIABLE(char *, policy_real_path, NULL, free);
+    RAII_VARIABLE(char *, path_to, NULL, free);
+    RAII_VARIABLE(char *, uname, NULL, free);
 
     check_null_input(path);
-    check_null_input(uname);
+#ifdef XXXX_PLATFORM
+    get_uname_and_path(path, uname, path_to);
+    if(!strncmp(path_to, COLLABORATION_PATH_STR,
+        strlen(COLLABORATION_PATH_STR)))
+    {
+    policy_real_path = get_policy_file_real_path(path);
+    if(NULL == policy_real_path)
+    {
+        PLM_ERR_PRINT("[%s] is not a link" ,path);
+        return ERROR_CODE_NOT_EXIST;
+    }
+#else
+    strcpyALL(policy_real_path, path);
+#endif
 
     if(ERROR_CODE_PATH_ERROR ==
-        read_policy(path, &read_policy_grp_data))
+        read_policy(policy_real_path, &read_policy_grp_data))
     {
         tLastNameData lnd;
         memset(&lnd, 0,sizeof(tLastNameData) );
-        strcpyALL(lnd.input_path_pchar, path);
+        strcpyALL(lnd.input_path_pchar, (char *)policy_real_path);
         get_last_folder_name(&lnd);
         if(!strcmp("/", lnd.prefix_path_pchar))
         {
