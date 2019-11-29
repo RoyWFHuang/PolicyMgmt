@@ -575,24 +575,39 @@ int write_policy(const char *path, const tPolicyGrp *policy_grp)
     for(int i=0; i<policy_grp->num_policy; i++)
     {
         int total_len = 0;
-        char tmp_buf[1024];
+        char tmp_buf[1024*8];
         memset(tmp_buf, 0, sizeof(tmp_buf));
         char *ptr = tmp_buf;
+        uint8_t policy_rule;
 
-        memcpy(ptr, &policy_grp->policy_data[i]->mask,
-            sizeof(uint8_t));
-        ptr +=1;
-        memcpy(ptr, &policy_grp->policy_data[i]->num_user_list,
-            sizeof(int32_t));
-        ptr +=4;
-        for(int num_user=0;
-            num_user<policy_grp->policy_data[i]->num_user_list; num_user++)
+        for(int num_policy_rule = 0;
+            num_policy_rule < __MAX_POLICY_RULES;
+            num_policy_rule++)
         {
-            strcat(ptr, "/");
-            strcat(ptr, policy_grp->policy_data[i]->user_list[num_user]);
+            policy_rule = __POILCY_BASE<<num_policy_rule;
+            if(policy_grp->policy_data[i]->mask & policy_rule)
+            {
+                *ptr = policy_rule;
+                ptr +=1;
+
+                memcpy(ptr, &policy_grp->policy_data[i]->num_user_list,
+                    sizeof(int32_t));
+                ptr +=4;
+                for(int num_user=0;
+                    num_user < policy_grp->policy_data[i]->num_user_list;
+                    num_user++)
+                {
+                    strcat(ptr, "/");
+                    strcat(ptr,
+                        policy_grp->policy_data[i]->user_list[num_user]);
+                }
+                strcat(ptr, "\n");
+                total_len += (strlen(ptr) + 1 + 4);
+                ptr+=strlen(ptr);
+            }
+
         }
-        strcat(ptr, "\n");
-        total_len = strlen(ptr) + 1 + 4;
+
         fwrite(tmp_buf, sizeof(char), total_len, stream);
     }
     fclose(stream);
