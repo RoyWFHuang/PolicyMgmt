@@ -228,7 +228,6 @@ static tPolicyStruct *__merge_policy_rule(int8_t mask,
     return ret_policy;
 }
 
-
 static tPolicyGrp *__merge_policy(
     const tPolicyGrp *dest_grp, const tPolicyGrp *src_grp)
 {
@@ -744,7 +743,9 @@ int check_policy(const char *path, const uint8_t mask)
     policy_real_path = get_policy_file_real_path(path);
     if(NULL == policy_real_path)
     {
-        PLM_ERR_PRINT("[%s] is not a link" ,path);
+#  ifdef PLM_DEBUG_MODE
+        PLM_DEBUG_PRINT("[%s] is not a link" ,path);
+#  endif
         return ERROR_CODE_NOT_EXIST;
     }
 #else
@@ -756,7 +757,7 @@ int check_policy(const char *path, const uint8_t mask)
     {
         tLastNameData lnd;
         memset(&lnd, 0,sizeof(tLastNameData) );
-        strcpyALL(lnd.input_path_pchar, (char *)policy_real_path);
+        strcpyALL(lnd.input_path_pchar, (char *)path);
         get_last_folder_name(&lnd);
         if(!strcmp("/", lnd.prefix_path_pchar))
         {
