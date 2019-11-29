@@ -14,6 +14,6 @@ jobs:
     - name: make
       run: make
     - name: make test
-      run: ./plmtest
+      run: make test
 #    - name: make distcheck
 #      run: make distcheck
