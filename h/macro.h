@@ -75,7 +75,6 @@
     void _dtor_ ## varname (vartype * v) { dtor(*v); } \
     vartype varname __attribute__((cleanup(_dtor_ ## varname))) = (initval)
 
-
 #define CREATE_PGRP(pgrp, num) do{\
     pgrp = calloc(num, sizeof(tPolicyGrp));\
     pgrp->num_policy = num;\
@@ -86,5 +85,17 @@
     pgrp->policy_data[ind] =\
         __merge_policy_rule(policy, dst, src);\
 }while(0)
+
+
+#define COUNT_1_BIT_NMBER(byte, ret) do{\
+    ret = 0;\
+    int8_t tmp = byte;\
+    for(ret = 0; tmp != 0; tmp >>= 1L)\
+    {\
+        if(tmp & 0x01)\
+            ret++;\
+    }\
+}while(0)\
+
 
 #endif

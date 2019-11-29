@@ -16,6 +16,8 @@
 #   endif
 #endif
 
+
+
  /**
   * Hint : input data  is no be free in this func
   *
@@ -251,6 +253,34 @@ static tPolicyGrp *__merge_policy(
         mask |= src_grp->policy_data[i]->mask;
     }
 
+    int num;
+    COUNT_1_BIT_NMBER(mask, num);
+    if(num > 0)
+    {
+        int grp_index = 0;
+        CREATE_PGRP(ret_data, num);
+        if(mask & __POILCY_READ)
+        {
+            WRITE_PGRP(ret_data, grp_index, __POILCY_READ, dest_grp, src_grp);
+            grp_index++;
+        }
+        if(mask & __POILCY_WRITE)
+        {
+            WRITE_PGRP(ret_data, grp_index, __POILCY_WRITE, dest_grp, src_grp);
+            grp_index++;
+        }
+        if(mask & __POILCY_CREAT)
+        {
+            WRITE_PGRP(ret_data, grp_index, __POILCY_CREAT, dest_grp, src_grp);
+            grp_index++;
+        }
+        if(mask & __POILCY_DEL)
+        {
+            WRITE_PGRP(ret_data, grp_index, __POILCY_DEL, dest_grp, src_grp);
+            grp_index++;
+        }
+    }
+/*
     switch(mask)
     {
         case __POILCY_READ:
@@ -281,7 +311,7 @@ static tPolicyGrp *__merge_policy(
             PLM_ERR_PRINT("Error mask\n");
             break;
     }
-
+*/
 __merge_policy_exit_lab_1 :
     return ret_data;
 }
@@ -390,6 +420,39 @@ static tPolicyGrp *__remove_part_of_policy(
         mask_src |= src_grp->policy_data[i]->mask;
     }
     mask = mask_dst & mask_src;
+
+    int num;
+    COUNT_1_BIT_NMBER(mask, num);
+    if(num > 0)
+    {
+        int grp_index = 0;
+        CREATE_PGRP(ret_data, num);
+        if(mask & __POILCY_READ)
+        {
+            ret_data->policy_data[grp_index] =
+                __remove_part_of_policy_rule(__POILCY_READ, dest_grp, src_grp);
+            grp_index++;
+        }
+        if(mask & __POILCY_WRITE)
+        {
+            ret_data->policy_data[grp_index] =
+                __remove_part_of_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
+            grp_index++;
+        }
+        if(mask & __POILCY_CREAT)
+        {
+            ret_data->policy_data[grp_index] =
+                __remove_part_of_policy_rule(__POILCY_CREAT, dest_grp, src_grp);
+            grp_index++;
+        }
+        if(mask & __POILCY_DEL)
+        {
+            ret_data->policy_data[grp_index] =
+                __remove_part_of_policy_rule(__POILCY_DEL, dest_grp, src_grp);
+            grp_index++;
+        }
+    }
+/*
     switch(mask)
     {
         case 0x00:
@@ -398,26 +461,17 @@ static tPolicyGrp *__remove_part_of_policy(
 #endif
             break;
         case __POILCY_READ:
-            ret_data = calloc(1, sizeof(tPolicyGrp));
-            ret_data->num_policy = 1;
-            ret_data->policy_data = calloc(ret_data->num_policy,
-                sizeof(tPolicyStruct *));
+            CREATE_PGRP(ret_data, 1);
             ret_data->policy_data[0] =
                 __remove_part_of_policy_rule(__POILCY_READ, dest_grp, src_grp);
             break;
         case __POILCY_WRITE:
-            ret_data = calloc(1, sizeof(tPolicyGrp));
-            ret_data->num_policy = 1;
-            ret_data->policy_data = calloc(ret_data->num_policy,
-                sizeof(tPolicyStruct *));
+            CREATE_PGRP(ret_data, 1);
             ret_data->policy_data[0] =
                 __remove_part_of_policy_rule(__POILCY_WRITE, dest_grp, src_grp);
             break;
-        case (__POILCY_READ|__POILCY_WRITE):
-            ret_data = calloc(1, sizeof(tPolicyGrp));
-            ret_data->num_policy = 2;
-            ret_data->policy_data = calloc(ret_data->num_policy,
-                sizeof(tPolicyStruct *));
+        case (__POILCY_READ | __POILCY_WRITE):
+            CREATE_PGRP(ret_data, 2);
             ret_data->policy_data[0] =
                 __remove_part_of_policy_rule(__POILCY_READ, dest_grp, src_grp);
             ret_data->policy_data[1] =
@@ -427,6 +481,7 @@ static tPolicyGrp *__remove_part_of_policy(
             PLM_ERR_PRINT("Error mask\n");
             break;
     }
+*/
 __remove_part_of_policy_exit_lab_1 :
     return ret_data;
 
