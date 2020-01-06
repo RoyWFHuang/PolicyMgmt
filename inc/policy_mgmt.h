@@ -5,7 +5,7 @@
  * format : | 8    | 4*8   | n*8       |
  *          | mask | #user | user list |
  * mask: see in policy_table.h
- * #user: number of user in flowing
+ * #user: number of user in following
  * user list: list all user, format is: /user1/user2/.....
  **/
 

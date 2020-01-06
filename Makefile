@@ -4,6 +4,7 @@ endif
 
 ifeq ($(CFLAG),)
   SRC_ROOT = $(pwd)/src
+  UTIL_MODULE = UtilLib
 endif
 
 ifeq ($(POLICYMGMT_LIB_NAME),)
@@ -32,9 +33,9 @@ POLICMGMT_LIB_FILE = $(POLICMGMT_FILE)
 INCLUDE_DIR = \
 -I./inc/ \
 -I./h/ \
--I../UtilLib/inc
+-I./$(UTIL_MODULE)/inc
 
-all:
+all: utillib
 	$(CC) -c $(POLICMGMT_LIB_FILE) $(CFLAG) $(INCLUDE_DIR)
 	ar -r $(POLICYMGMT_LIB_NAME) *.o
 	mv $(POLICYMGMT_LIB_NAME) ./lib/
@@ -42,12 +43,19 @@ all:
 
 clean:
 	rm -rf *.o ./lib/$(POLICYMGMT_LIB_NAME)
+	make -C $(UTIL_MODULE) clean
 
 distclean: clean
 	rm -rf plmtest
+	rm -rf $(UTIL_MODULE)
 
-test:
+test: utillib
 	$(CC) -c $(POLICMGMT_LIB_FILE) plmtest.c $(CFLAG) \
 $(INCLUDE_DIR) $(DEBUG_FLAG) -DCONSOLE_DEBUG -DMD_DIR_PATH=\".\"
-	$(CC) -g *.o -lmethod -L../UtilLib/lib/ -lcrypto -o plmtest
+	$(CC) -g *.o -lmethod -L../$(UTIL_MODULE)/lib/ -lcrypto -o plmtest
 	rm -rf *.o
+
+utillib:
+	@git submodule init ; \
+	git submodule update
+	make -C $(UTIL_MODULE)
